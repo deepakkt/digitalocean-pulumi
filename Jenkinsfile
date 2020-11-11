@@ -3,6 +3,7 @@ pipeline {
         docker {
             label 'vps'
             image "deepakkt/pulumi-do:python"
+            args '-u root'
         }
     }
     environment {
