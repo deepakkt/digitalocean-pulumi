@@ -11,7 +11,7 @@ pipeline {
     stages {
         stage("Login to Pulumi") {
             steps {
-                sh "pulumi login"
+                sh "pulumi login https://app.pulumi.com/deepakkt-a"
             }
         }
     }
