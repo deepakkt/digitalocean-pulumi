@@ -11,10 +11,7 @@ stack_name = pulumi.get_stack()
 project_name = "aasaan-dev-{}".format(stack_name)
 
 regions = do.get_regions()
-pprint(regions)
-
 domain_name = "{}.aasaan.do.ktdpack.com".format(stack_name)
-print("We will use ", domain_name)
 
 user_data = """#!/bin/bash
   sudo apt-get update
@@ -25,7 +22,6 @@ user_data = """#!/bin/bash
 # print(["{} - {}".format(x.slug, x.name) for x in regions.regions])
 
 ssh_key = do.get_ssh_key("aasaan-jenkins")
-print(ssh_key.fingerprint)
 
 # images = do.get_images()
 # for x in images.images:
@@ -75,7 +71,7 @@ domain = do.Domain(
 
 target = do.Project(
     "aasaan-dev",
-    project_name,
+    name=project_name,
     resources=[
         droplet.droplet_urn,
         domain.domain_urn,
