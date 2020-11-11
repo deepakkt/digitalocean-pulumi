@@ -2,15 +2,13 @@ pipeline {
     agent {
         docker {
             label 'vps'
-            image "pulumi/pulumi-python:2.13.2"
+            image "deepakkt/pulumi-do:python"
         }
     }
+    environment {
+        PULUMI_ACCESS_TOKEN = credentials('pulumi-access-token')
+    }
     stages {
-        stage("Install Requirements") {
-            steps {
-                sh "pip install -r requirements.txt"
-            }
-        }
         stage("Login to Pulumi") {
             steps {
                 sh "pulumi login"
