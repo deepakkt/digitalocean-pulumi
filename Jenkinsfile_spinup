@@ -1,0 +1,36 @@
+pipeline {
+    agent {
+        docker {
+            label 'vps'
+            image "deepakkt/pulumi-do:python"
+            args '-u root'
+        }
+    }
+    environment {
+        PULUMI_ACCESS_TOKEN = credentials('pulumi-access-token')
+    }
+    stages {
+        stage("Login to Pulumi") {
+            steps {
+                sh "pulumi login"
+            }
+        }
+        stage("Initialize stack") {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    sh "pulumi stack init $BRANCH_NAME"
+                }
+            }
+        }
+        stage("Switch stack") {
+            steps {
+                sh "pulumi stack select $BRANCH_NAME"
+            }
+        }
+        stage("Provision") {
+            steps {
+                sh "pulumi up --non-interactive --yes"
+            }
+        }
+    }
+}

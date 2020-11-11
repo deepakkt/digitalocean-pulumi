@@ -15,5 +15,15 @@ pipeline {
                 sh "pulumi login"
             }
         }
+        stage("Select stack") {
+            steps {
+                sh "pulumi stack select $BRANCH_NAME"
+            }
+        }
+        stage("Teardown") {
+            steps {
+                sh "pulumi destroy --non-interactive --yes"
+            }
+        }
     }
 }
