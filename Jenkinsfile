@@ -1,6 +1,7 @@
 pipeline {
     agent {
         docker {
+            label 'vps'
             image "pulumi/pulumi-python:2.13.2"
         }
     }
