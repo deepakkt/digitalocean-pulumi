@@ -8,6 +8,7 @@ pipeline {
     }
     environment {
         PULUMI_ACCESS_TOKEN = credentials('pulumi-access-token')
+        DIGITALOCEAN_TOKEN = credentials('DIGITALOCEAN_TOKEN')
     }
     stages {
         stage("Login to Pulumi") {
