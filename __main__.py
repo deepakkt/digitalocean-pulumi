@@ -86,7 +86,7 @@ domains = []
 for each_domain in domain_names:
     domain = do.Domain(
         each_domain,
-        name=each_domain,
+        name="{}.{}".format(each_domain, base_domain),
         ip_address=domain_names[each_domain]
     )
     domains.append(domain)
