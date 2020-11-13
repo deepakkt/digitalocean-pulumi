@@ -8,14 +8,27 @@ from pulumi import export
 def get_ssh_keys(keys_list):
     return map(do.get_ssh_key, keys_list)
 
-droplet_count = int(os.getenv("DROPLET_COUNT"))
-region = "blr1"
+def get_envs():
+    return {
+        "DROPLET_COUNT": int(os.getenv("DROPLET_COUNT", "1")),
+        "BASE_DOMAIN": os.getenv("BASE_DOMAIN") or "aasaan.do.ktdpack.com",
+        "PROJECT_BASE_NAME": os.getenv("PROJECT_BASE_NAME") or "aasaan-dev",
+        "DO_REGION": os.getenv("DO_REGION") or "blr1",
+        "VPS_TYPE": os.getenv("VPS_TYPE") or "s-1vcpu-1gb",
+        "VPS_IMAGE": os.getenv("VPS_IMAGE") or "docker-20-04",
+    }
+
+
+env_settings = get_envs()
+
+droplet_count = env_settings.get("DROPLET_COUNT", 1)
+region = env_settings.get("DO_REGION", "blr1")
+project_base_name = env_settings.get("PROJECT_BASE_NAME", "aasaan-dev")
+base_domain = env_settings.get("BASE_DOMAIN", "aasaan.do.ktdpack.com")
 
 stack_name = pulumi.get_stack()
-project_name = "aasaan-dev-{}".format(stack_name)
+project_name = "{}-{}".format(project_base_name, stack_name)
 
-regions = do.get_regions()
-domain_name = "{}.aasaan.do.ktdpack.com".format(stack_name)
 loadbalancer = ""
 
 user_data = """#!/bin/bash
@@ -23,8 +36,6 @@ user_data = """#!/bin/bash
   sudo apt-get install -y nginx
 """
 
-# regions = do.get_regions()
-# print(["{} - {}".format(x.slug, x.name) for x in regions.regions])
 
 key_list = [
     "digitalocean-ipc-droplet",
@@ -33,19 +44,12 @@ key_list = [
 ]
 ssh_keys=[ssh_key.fingerprint for ssh_key in get_ssh_keys(key_list)]
 
-# images = do.get_images()
-# for x in images.images:
-#     if "blr1" in x.regions:
-#         print(x.description, x.slug)
-# print([x.description for x in images.images if "blr1" in x.regions])
-
-# project = do.get_project(name="aasaan")
-# print("found project ==> ", project.id, project.name, project.description)
 
 droplet_type_tag = do.Tag("aasaan")
 droplets = []
+domain_names = dict()
 
-for x in range(0, droplet_count):
+for x in range(1, droplet_count + 1):
     instance_name = "web-%s" %x
     name_tag = do.Tag(instance_name)
     droplet = do.Droplet(
@@ -58,10 +62,11 @@ for x in range(0, droplet_count):
         ssh_keys=ssh_keys,
     )
     droplets.append(droplet)
+    domain_names["{}{}".format(stack_name, x)] = droplet.ipv4_address
 
 if droplet_count > 1:
     loadbalancer = do.LoadBalancer(
-        "public",
+        "{}-lb".format(project_base_name),
         droplet_tag=droplet_type_tag.name,
         forwarding_rules=[do.LoadBalancerForwardingRuleArgs(
             entry_port=80,
@@ -75,26 +80,32 @@ if droplet_count > 1:
         ),
         region=region,
     )
+    domain_names["{}".format(stack_name)] = loadbalancer.ip
 
-ipv4_address = loadbalancer.ip if loadbalancer else droplet.ipv4_address
+domains = []
+for each_domain in domain_names:
+    domain = do.Domain(
+        each_domain,
+        name=each_domain,
+        ip_address=domain_names[each_domain]
+    )
+    domains.append(domain)
 
-domain = do.Domain(
-    "do-domain",
-    name=domain_name,
-    ip_address=ipv4_address,
-)
-
-urns = [d.droplet_urn for d in droplets] + [domain.domain_urn]
+urns = [d.droplet_urn for d in droplets] + [d.domain_urn for d in domains]
 if loadbalancer:
     urns.append(loadbalancer.load_balancer_urn)
 
 target = do.Project(
-    "aasaan-dev",
+    project_base_name,
     name=project_name,
     resources=urns
 )
 
 if loadbalancer:
     export("endpoint", loadbalancer.ip)
-export("droplet", droplet.ipv4_address)
-export("domain", domain.name)
+
+for droplet in droplets:
+    export("droplet", droplet.ipv4_address)
+
+for domain in domains:
+    export("domain", domain.name)
