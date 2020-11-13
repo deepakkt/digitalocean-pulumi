@@ -31,6 +31,7 @@ key_list = [
     "asus",
     "aasaan-jenkins",
 ]
+ssh_keys=[ssh_key.fingerprint for ssh_key in get_ssh_keys(key_list)]
 
 # images = do.get_images()
 # for x in images.images:
@@ -54,7 +55,7 @@ for x in range(0, droplet_count):
         size="s-1vcpu-1gb",
         tags=[name_tag.id, droplet_type_tag.id],
         user_data=user_data,
-        ssh_keys=[ssh_key.fingerprint for ssh_key in get_ssh_keys(key_list)],
+        ssh_keys=ssh_keys,
     )
     droplets.append(droplet)
 
