@@ -6,6 +6,9 @@ pipeline {
             args '-u root'
         }
     }
+    options {
+        ansiColor('xterm')
+    }
     environment {
         PULUMI_ACCESS_TOKEN = credentials('pulumi-access-token')
         DIGITALOCEAN_TOKEN = credentials('DIGITALOCEAN_TOKEN')
