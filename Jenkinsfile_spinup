@@ -12,6 +12,7 @@ pipeline {
     environment {
         PULUMI_ACCESS_TOKEN = credentials('pulumi-access-token')
         DIGITALOCEAN_TOKEN = credentials('DIGITALOCEAN_TOKEN')
+        BITBUCKET_CREDS =  credentials('bitbucket-deepak')
     }
     stages {
         stage("Login to Pulumi") {
@@ -26,14 +27,20 @@ pipeline {
                 }
             }
         }
-        stage("Switch stack") {
-            steps {
-                sh "pulumi stack select $BRANCH_NAME"
-            }
-        }
         stage("Provision") {
             steps {
-                sh "pulumi up --non-interactive --yes"
+                sh """
+                pulumi stack select $BRANCH_NAME
+                pulumi up --non-interactive --yes
+                ssh-keygen -R ${env.BRANCH_NAME}.aasaan.do.ktdpack.com
+                """
+            }
+        }
+        stage("Setup target") {
+            steps {
+                    sh """
+                    ssh -C "mkdir -p /app && git clone https://${env.BITBUCKET_CREDS}@bitbucket.org/$BITBUCKET_USER/aasaan /app"
+                    """
             }
         }
     }

@@ -32,8 +32,7 @@ project_name = "{}-{}".format(project_base_name, stack_name)
 loadbalancer = ""
 
 user_data = """#!/bin/bash
-  sudo apt-get update
-  sudo apt-get install -y nginx
+  sudo apt-get update  
 """
 
 
