@@ -8,6 +8,7 @@ from pulumi import export
 def get_ssh_keys(keys_list):
     return map(do.get_ssh_key, keys_list)
 
+
 def get_envs():
     return {
         "DROPLET_COUNT": int(os.getenv("DROPLET_COUNT", "1")),
@@ -35,21 +36,19 @@ user_data = """#!/bin/bash
   sudo apt-get update  
 """
 
-
 key_list = [
     "digitalocean-ipc-droplet",
     "asus",
     "aasaan-jenkins",
 ]
-ssh_keys=[ssh_key.fingerprint for ssh_key in get_ssh_keys(key_list)]
-
+ssh_keys = [ssh_key.fingerprint for ssh_key in get_ssh_keys(key_list)]
 
 droplet_type_tag = do.Tag("aasaan")
 droplets = []
 domain_names = dict()
 
 for x in range(1, droplet_count + 1):
-    instance_name = "web-%s" %x
+    instance_name = "web-%s" % x
     name_tag = do.Tag(instance_name)
     droplet = do.Droplet(
         instance_name,
